@@ -1,0 +1,36 @@
+#!/command/with-contenv sh
+
+# Update new-repo
+if [ ! -z "${GIT_URL}" ]; then
+  sed -i "s/GIT_URL/${GIT_URL}/g" /home/git/git-shell-commands/init
+fi
+
+if [ ! -z "${GIT_OWNER}" ]; then
+  sed -i "s/GIT_OWNER/${GIT_OWNER}/g" /home/git/git-shell-commands/init
+fi
+
+# Add ssh keys to authorized
+if [ "$(ls -A /keys/)" ]; then
+  cat /keys/*.pub > /home/git/.ssh/authorized_keys
+  chown -R git:git /home/git/.ssh
+  chmod 700 /home/git/.ssh
+  chmod -R 600 /home/git/.ssh/*
+fi
+
+# Updated repos permission
+if [ -d /repos/ ]; then
+  chown -R git:git /repos
+  chmod -R ug+rwX /repos
+  find /repos -type d -exec chmod g+s '{}' +
+fi
+
+# Update html permission
+if [ -d /html/ ]; then
+  cp /resources/* /html/
+  chown -R git:git /html
+  chmod -R ug+rwX /html
+  chmod -R o+r /html
+  find /html -type d -exec chmod g+s '{}' +
+fi
+
+

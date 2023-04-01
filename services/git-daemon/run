@@ -1,0 +1,3 @@
+#!/command/execlineb -P
+
+/usr/bin/git daemon --reuseaddr --base-path=/repos/ /repos/

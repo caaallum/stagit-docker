@@ -1,0 +1,22 @@
+#!/bin/sh
+
+[ -z "$1" ] && echo "No name provided" && echo "new-repo <name> <desc>" && exit 1
+[ -z "$2" ] && echo "No description provided" && echo "new-repo <name> <desc>" && exit 1
+
+REPO_DIR=/repos/"$1".git
+HTML_DIR=/html/"$1"
+
+mkdir -p $REPO_DIR
+git --git-dir=$REPO_DIR init --bare
+touch $REPO_DIR/git-daemon-export-ok
+echo "$2" > $REPO_DIR/description
+echo "git://GIT_URL/$1.git" > $REPO_DIR/url
+echo "GIT_OWNER" > $REPO_DIR/owner
+echo "cd $HTML_DIR && stagit $REPO_DIR" > $REPO_DIR/hooks/post-update
+echo "find /repos/ -type d -name \*.git | sort | xargs stagit-index > /html/index.html" >> $REPO_DIR/hooks/post-update
+chmod +x $REPO_DIR/hooks/post-update
+
+mkdir -p $HTML_DIR
+ln -sf /resources/favicon.png $HTML_DIR/favicon.png
+ln -sf /rescouces/logo.png $HTML_DIR/logo.png
+ln -sf /resources/style.css $HTML_DIR/style.css
