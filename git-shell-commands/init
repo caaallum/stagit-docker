@@ -1,21 +1,110 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
-[ -z "$1" ] && echo "No name provided" && echo "new-repo <name> <desc>" && exit 1
-[ -z "$2" ] && echo "No description provided" && echo "new-repo <name> <desc>" && exit 1
+OPTIND=1
 
-REPO_DIR=/repos/"$1".git
-HTML_DIR=/html/"$1"
+usage() {
+    cat << HEREDOC 
 
+Usage $ARG_PROGRAM_NAME [--name NAME] [--description DESCRIPTION]
+
+Optional arguments:
+-h, --help        Show this help message
+-n, --name        Set repository name
+-d, --description Set repository description
+-v, --verbose     Increase verbosity
+
+HEREDOC
+}
+
+vprint() {
+    if [ $ARG_VERBOSE = true ]; then
+        echo $1 
+    fi
+}
+
+# Options
+ARG_PROGRAM_NAME=$(basename $0)
+ARG_VERSION=false
+ARG_VERBOSE=false
+ARG_NAME=""
+ARG_DESCRIPTION=""
+
+SHORT_OPTS="hvVn:d:"
+LONG_OPTS="help,verbose,version,name:,description:"
+
+OPTS=$(getopt -o "$SHORT_OPTS" --long "$LONG_OPTS" -n "$ARG_PROGRAM_NAME" -- "$@")
+if [ $? != 0 ]; then
+    echo "Error in command line arguments." >&2
+    usage
+    exit 1
+fi
+eval set -- "$OPTS"
+
+# Parse options
+while true; do
+    case "$1" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        -v | --verbose)
+            ARG_VERBOSE=true
+            shift
+            ;;
+        -V | --version)
+            ARG_VERSION=true
+            shift
+            ;;
+        -n | --name)
+            ARG_NAME="$2"
+            shift 2
+            ;;
+        -d | --description)
+            ARG_DESCRIPTION="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        * ) 
+            break
+            ;;
+    esac
+done
+
+REPO_DIR=/repos/"$ARG_NAME".git
+HTML_DIR=/html/"$ARG_DESCRIPTION"
+
+if [ $ARG_VERBOSE = true ]; then
+    cat << EOM
+Verbose         $ARG_VERBOSE
+Version         $ARG_VERSION
+Name            $ARG_NAME
+Description     $ARG_DESCRIPTION
+Repo dir        $REPO_DIR
+Html dir        $HTML_DIR
+EOM
+fi
+
+if [ -z "$ARG_NAME" ] || [ -z "$ARG_DESCRIPTION" ]; then
+    echo "Name and description must be set"
+    usage
+    exit
+fi
+
+# Create git repo
 mkdir -p $REPO_DIR
 git --git-dir=$REPO_DIR init --bare
 touch $REPO_DIR/git-daemon-export-ok
-echo "$2" > $REPO_DIR/description
-echo "git://GIT_URL/$1.git" > $REPO_DIR/url
+echo "$ARG_DESCRIPTION" > $REPO_DIR/description
+echo "git://GIT_URL/$ARG_NAME.git" > $REPO_DIR/url
 echo "GIT_OWNER" > $REPO_DIR/owner
 echo "cd $HTML_DIR && stagit $REPO_DIR" > $REPO_DIR/hooks/post-update
 echo "find /repos/ -type d -name \*.git | sort | xargs stagit-index > /html/index.html" >> $REPO_DIR/hooks/post-update
 chmod +x $REPO_DIR/hooks/post-update
 
+# Copy html resources
 mkdir -p $HTML_DIR
 ln -sf /resources/favicon.png $HTML_DIR/favicon.png
 ln -sf /rescouces/logo.png $HTML_DIR/logo.png
