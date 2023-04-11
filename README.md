@@ -31,7 +31,7 @@ Host localhost
 
 Create a repo
 ```bash
-$ ssh localhost init test test
+$ ssh localhost init --name test --description test
 ```
 
 Clone repo and update repo
