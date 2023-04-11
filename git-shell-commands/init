@@ -16,12 +16,6 @@ Optional arguments:
 HEREDOC
 }
 
-vprint() {
-    if [ $ARG_VERBOSE = true ]; then
-        echo $1 
-    fi
-}
-
 # Options
 ARG_PROGRAM_NAME=$(basename $0)
 ARG_VERSION=false
